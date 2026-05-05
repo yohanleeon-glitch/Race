@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tamil Game Dev</title>
+    <style>
+        body { margin: 0; text-align: center; font-family: sans-serif; background: #f0f0f0; overflow: hidden; }
+        canvas { background: #fff; border-bottom: 5px solid #333; display: block; margin: 0 auto; }
+        .info { padding: 10px; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="info">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const scoreElement = document.getElementById("score");
+
+        canvas.width = window.innerWidth;
+        canvas.height = 400;
+
+        let score = 0;
+        let player = { x: 50, y: 350, w: 40, h: 40, dy: 0, jumpPower: -12, gravity: 0.6, grounded: true };
+        let obstacles = [];
+        let gameSpeed = 5;
+
+        // Jump control
+        window.addEventListener("touchstart", () => { if(player.grounded) { player.dy = player.jumpPower; player.grounded = false; } });
+        window.addEventListener("keydown", (e) => { if(e.code === "Space" && player.grounded) { player.dy = player.jumpPower; player.grounded = false; } });
+
+        function spawnObstacle() {
+            let size = Math.random() * 30 + 20;
+            obstacles.push({ x: canvas.width, y: 390 - size, w: 20, h: size });
+        }
+
+        let frame = 0;
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Player Physics
+            player.dy += player.gravity;
+            player.y += player.dy;
+            if (player.y > 350) { player.y = 350; player.dy = 0; player.grounded = true; }
+
+            // Draw Player
+            ctx.fillStyle = "#FF5733";
+            ctx.fillRect(player.x, player.y, player.w, player.h);
+
+            // Obstacles
+            if (frame % 100 === 0) spawnObstacle();
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let o = obstacles[i];
+                o.x -= gameSpeed;
+                ctx.fillStyle = "#333";
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+
+                // Collision Detection
+                if (player.x < o.x + o.w && player.x + player.w > o.x && player.y < o.y + o.h && player.y + player.h > o.y) {
+                    alert("Game Over! Score: " + score);
+                    score = 0;
+                    obstacles = [];
+                    gameSpeed = 5;
+                }
+
+                if (o.x + o.w < 0) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    gameSpeed += 0.1;
+                }
+            }
+
+            scoreElement.innerText = score;
+            frame++;
+            requestAnimationFrame(update);
+        }
+
+        update();
+    </script>
+</body>
+</html>
